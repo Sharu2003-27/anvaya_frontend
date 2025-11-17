@@ -1,0 +1,130 @@
+.lead-list-container {
+  padding: 20px;
+}
+
+.lead-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.lead-list-header h2 {
+  color: #1976d2;
+  font-size: 28px;
+}
+
+.filters-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.filter-group label {
+  margin-bottom: 5px;
+  color: #666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.filter-group select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.leads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.lead-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.lead-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.lead-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.lead-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1976d2;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.lead-name:hover {
+  text-decoration: underline;
+}
+
+.lead-card-body {
+  margin-bottom: 15px;
+}
+
+.lead-card-body p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.lead-tags {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.lead-card-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.lead-card-actions button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lead-card-actions button:hover {
+  background-color: #f5f5f5;
+}
+
+.no-leads {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  grid-column: 1 / -1;
+}
