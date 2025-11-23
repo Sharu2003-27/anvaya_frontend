@@ -16,7 +16,7 @@ export default function LeadForm({ onSuccess }) {
     priority: 'Medium',
   });
   const [agents, setAgents] = useState([]);
-  const [tags, setTags] = useState([]);
+  // const [tags, setTags] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,14 +58,14 @@ export default function LeadForm({ onSuccess }) {
       setFormData({
         name: lead.name,
         source: lead.source,
-        salesAgent: lead.salesAgent.id,
+        salesAgent: lead.salesAgent._id,
         status: lead.status,
         tags: lead.tags || [],
         timeToClose: lead.timeToClose,
         priority: lead.priority,
       });
-    } catch (err) {
-      setError('Error loading lead details');
+    } catch (error) {
+      setError('Error loading lead details', error);
     }
   };
 
@@ -144,9 +144,9 @@ export default function LeadForm({ onSuccess }) {
             onChange={handleChange}
             required
           >
-            <option value="">Select an agent</option>
+            <option value={formData.salesAgent}>Select an agent</option>
             {agents.map(agent => (
-              <option key={agent.id} value={agent.id}>{agent.name}</option>
+              <option key={agent._id} value={agent._id}>{agent.name}</option>
             ))}
           </select>
         </div>
