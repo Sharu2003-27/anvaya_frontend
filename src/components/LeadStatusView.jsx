@@ -6,7 +6,8 @@ import './LeadStatusView.css';
 export default function LeadStatusView() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [leads, setLeads] = useState([]);
+  const [allLeads, setAllLeads] = useState([]); // Store all leads for count calculation
+  const [leads, setLeads] = useState([]); // Filtered leads for display
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || 'New');
@@ -20,6 +21,7 @@ export default function LeadStatusView() {
 
   useEffect(() => {
     loadAgents();
+    loadAllLeads(); // Load all leads for count calculation
   }, []);
 
   useEffect(() => {
@@ -40,6 +42,15 @@ export default function LeadStatusView() {
       setAgents(response.data);
     } catch (err) {
       console.error('Error loading agents:', err);
+    }
+  };
+
+  const loadAllLeads = async () => {
+    try {
+      const response = await leadsAPI.getAll();
+      setAllLeads(response.data);
+    } catch (err) {
+      console.error('Error loading all leads:', err);
     }
   };
 
@@ -126,7 +137,7 @@ export default function LeadStatusView() {
             className={`status-tab ${selectedStatus === status ? 'active' : ''}`}
             onClick={() => setSelectedStatus(status)}
           >
-            {status} ({leads.filter(l => l.status === status).length})
+            {status} ({allLeads.filter(l => l.status === status).length})
           </button>
         ))}
       </div>

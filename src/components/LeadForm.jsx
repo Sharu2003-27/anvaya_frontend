@@ -58,7 +58,7 @@ export default function LeadForm({ onSuccess }) {
       setFormData({
         name: lead.name,
         source: lead.source,
-        salesAgent: lead.salesAgent._id,
+        salesAgent: lead.salesAgent?.id || lead.salesAgent?._id,
         status: lead.status,
         tags: lead.tags || [],
         timeToClose: lead.timeToClose,
@@ -144,9 +144,9 @@ export default function LeadForm({ onSuccess }) {
             onChange={handleChange}
             required
           >
-            <option value={formData.salesAgent}>Select an agent</option>
+            <option value="">Select an agent</option>
             {agents.map(agent => (
-              <option key={agent._id} value={agent._id}>{agent.name}</option>
+              <option key={agent.id || agent._id} value={agent.id || agent._id}>{agent.name}</option>
             ))}
           </select>
         </div>

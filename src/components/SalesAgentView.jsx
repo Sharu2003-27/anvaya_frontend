@@ -21,9 +21,7 @@ export default function SalesAgentView() {
   }, []);
 
   useEffect(() => {
-    if (selectedAgent) {
-      loadLeads();
-    }
+    loadLeads();
   }, [selectedAgent, filters, sortBy]);
 
   useEffect(() => {
@@ -38,6 +36,7 @@ export default function SalesAgentView() {
     try {
       const response = await agentsAPI.getAll();
       setAgents(response.data);
+      // If no agent selected from URL, select first agent
       if (response.data.length > 0 && !selectedAgent) {
         setSelectedAgent(response.data[0].id);
       }
@@ -47,7 +46,11 @@ export default function SalesAgentView() {
   };
 
   const loadLeads = async () => {
-    if (!selectedAgent) return;
+    if (!selectedAgent) {
+      setLeads([]);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
