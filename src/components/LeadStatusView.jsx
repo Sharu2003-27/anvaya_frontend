@@ -6,8 +6,8 @@ import './LeadStatusView.css';
 export default function LeadStatusView() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [allLeads, setAllLeads] = useState([]); // Store all leads for count calculation
-  const [leads, setLeads] = useState([]); // Filtered leads for display
+  const [allLeads, setAllLeads] = useState([]); 
+  const [leads, setLeads] = useState([]); 
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || 'New');
@@ -21,7 +21,7 @@ export default function LeadStatusView() {
 
   useEffect(() => {
     loadAgents();
-    loadAllLeads(); // Load all leads for count calculation
+    loadAllLeads(); 
   }, []);
 
   useEffect(() => {

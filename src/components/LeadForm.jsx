@@ -20,6 +20,9 @@ export default function LeadForm({ onSuccess }) {
   const [availableTags, setAvailableTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newTagName, setNewTagName] = useState('');
+  const [tagFeedback, setTagFeedback] = useState('');
+  const [isAddingTag, setIsAddingTag] = useState(false);
 
   const leadSources = ['Website', 'Referral', 'Cold Call', 'Advertisement', 'Email', 'Other'];
   const statuses = ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Closed'];
@@ -81,6 +84,32 @@ export default function LeadForm({ onSuccess }) {
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag],
     }));
+  };
+
+  const handleAddTag = async () => {
+    const trimmedTag = newTagName.trim();
+    if (!trimmedTag) {
+      setTagFeedback('Enter a tag name to add it to the list.');
+      return;
+    }
+
+    setIsAddingTag(true);
+    setTagFeedback('');
+    try {
+      const response = await tagsAPI.create({ name: trimmedTag });
+      const createdTag = response.data.name || trimmedTag;
+      setAvailableTags(prev => Array.from(new Set([...prev, createdTag])));
+      setFormData(prev => ({
+        ...prev,
+        tags: prev.tags.includes(createdTag) ? prev.tags : [...prev.tags, createdTag],
+      }));
+      setNewTagName('');
+      setTagFeedback(`Tag "${createdTag}" added and selected.`);
+    } catch (err) {
+      setTagFeedback(err.response?.data?.error || 'Unable to add tag right now.');
+    } finally {
+      setIsAddingTag(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -205,6 +234,27 @@ export default function LeadForm({ onSuccess }) {
               </label>
             ))}
           </div>
+          {availableTags.length === 0 && (
+            <p className="lead-form-note"></p>
+          )}
+          <div className="tag-actions">
+            <input
+              type="text"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTag();
+                }
+              }}
+              placeholder="Type a tag name"
+            />
+            <button type="button" onClick={handleAddTag} disabled={isAddingTag}>
+              {isAddingTag ? 'Adding…' : 'Add Tag'}
+            </button>
+          </div>
+          {tagFeedback && <p className="tag-feedback">{tagFeedback}</p>}
         </div>
 
         <div className="form-actions">

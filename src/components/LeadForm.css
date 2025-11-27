@@ -69,6 +69,45 @@
   margin: 0;
 }
 
+.tag-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tag-actions input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tag-actions button {
+  padding: 10px 18px;
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tag-actions button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.tag-feedback {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #0f5132;
+}
+
+.lead-form-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
 .form-actions {
   display: flex;
   gap: 10px;

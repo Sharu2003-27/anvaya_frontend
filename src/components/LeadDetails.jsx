@@ -43,9 +43,13 @@ export default function LeadDetails() {
   const loadAgents = async () => {
     try {
       const response = await agentsAPI.getAll();
-      setAgents(response.data);
-      if (response.data.length > 0) {
-        setSelectedAgent(response.data[0].id);
+      const fetchedAgents = response.data;
+      setAgents(fetchedAgents);
+
+      // Default to the first agent's id (supports both id and _id shapes)
+      if (fetchedAgents.length > 0) {
+        const firstAgent = fetchedAgents[0];
+        setSelectedAgent(firstAgent.id || firstAgent._id);
       }
     } catch (err) {
       console.error('Error loading agents:', err);
@@ -192,9 +196,14 @@ export default function LeadDetails() {
                 onChange={(e) => setSelectedAgent(e.target.value)}
                 required
               >
-                {agents.map(agent => (
-                  <option key={agent.id} value={agent.id}>{agent.name}</option>
-                ))}
+                {agents.map(agent => {
+                  const agentId = agent.id || agent._id;
+                  return (
+                    <option key={agentId} value={agentId}>
+                      {agent.name}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <button type="submit" disabled={submittingComment} className="btn-primary">
