@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { agentsAPI, tagsAPI } from '../services/api';
+import { agentsAPI } from '../services/api';
 import { useToast } from './ToastProvider';
 import '../styles/buttonTheme.css';
 import './Settings.css';
@@ -11,17 +11,9 @@ export default function Settings() {
 
   const [agents, setAgents] = useState([]);
   const [agentsLoading, setAgentsLoading] = useState(true);
-  const [newAgent, setNewAgent] = useState({ name: '', email: '' });
-  const [creatingAgent, setCreatingAgent] = useState(false);
-
-  const [tags, setTags] = useState([]);
-  const [tagsLoading, setTagsLoading] = useState(true);
-  const [newTagName, setNewTagName] = useState('');
-  const [creatingTag, setCreatingTag] = useState(false);
 
   useEffect(() => {
     loadAgents();
-    loadTags();
   }, []);
 
   const loadAgents = async () => {
@@ -34,46 +26,6 @@ export default function Settings() {
       addToast({ type: 'error', message: 'Unable to load sales agents.' });
     } finally {
       setAgentsLoading(false);
-    }
-  };
-
-  const loadTags = async () => {
-    setTagsLoading(true);
-    try {
-      const res = await tagsAPI.getAll();
-      setTags(res.data || []);
-    } catch (err) {
-      console.error('Error loading tags:', err);
-      addToast({ type: 'error', message: 'Unable to load tags.' });
-    } finally {
-      setTagsLoading(false);
-    }
-  };
-
-  const handleNewAgentChange = (e) => {
-    const { name, value } = e.target;
-    setNewAgent(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreateAgent = async (e) => {
-    e.preventDefault();
-    if (!newAgent.name.trim() || !newAgent.email.trim()) return;
-
-    setCreatingAgent(true);
-    try {
-      await agentsAPI.create({
-        name: newAgent.name.trim(),
-        email: newAgent.email.trim(),
-      });
-      addToast({ type: 'success', message: 'Sales agent added successfully.' });
-      setNewAgent({ name: '', email: '' });
-      loadAgents();
-    } catch (err) {
-      const message = err.response?.data?.error || 'Error adding sales agent.';
-      console.error('Error adding agent:', err);
-      addToast({ type: 'error', message });
-    } finally {
-      setCreatingAgent(false);
     }
   };
 
@@ -122,40 +74,11 @@ export default function Settings() {
         <div className="settings-section-header">
           <h3>Sales Agents</h3>
           <p className="settings-section-subtitle">
-            Manage your sales agents. Use "View Leads" to see all leads for an agent.
+            View and delete existing sales agents. Use "View Leads" to see all leads for an agent.
           </p>
         </div>
 
         <div className="settings-grid">
-          <div className="settings-card">
-            <h4>Add New Sales Agent</h4>
-            <form onSubmit={handleCreateAgent} className="settings-form">
-              <div className="form-group">
-                <label>Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newAgent.name}
-                  onChange={handleNewAgentChange}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={newAgent.email}
-                  onChange={handleNewAgentChange}
-                  required
-                />
-              </div>
-              <button type="submit" className="btn-primary" disabled={creatingAgent}>
-                {creatingAgent ? 'Saving...' : 'Add Agent'}
-              </button>
-            </form>
-          </div>
-
           <div className="settings-card">
             <h4>All Sales Agents</h4>
             {agentsLoading ? (
@@ -196,51 +119,6 @@ export default function Settings() {
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="settings-section">
-        <div className="settings-section-header">
-          <h3>Tags</h3>
-          <p className="settings-section-subtitle">
-            Define tags here. They will be available to select in the lead form.
-          </p>
-        </div>
-
-        <div className="settings-grid">
-          <div className="settings-card">
-            <h4>Add New Tag</h4>
-            <form onSubmit={handleCreateTag} className="settings-form">
-              <div className="form-group">
-                <label>Tag Name *</label>
-                <input
-                  type="text"
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  placeholder="e.g. High Value, Returning Customer"
-                  required
-                />
-              </div>
-              <button type="submit" className="btn-primary" disabled={creatingTag}>
-                {creatingTag ? 'Saving...' : 'Add Tag'}
-              </button>
-            </form>
-          </div>
-
-          <div className="settings-card">
-            <h4>Existing Tags</h4>
-            {tagsLoading ? (
-              <div className="loading">Loading tags...</div>
-            ) : tags.length === 0 ? (
-              <div className="no-items">No tags defined yet.</div>
-            ) : (
-              <ul className="tag-list">
-                {tags.map(tag => (
-                  <li key={tag._id || tag.id}>{tag.name}</li>
-                ))}
-              </ul>
             )}
           </div>
         </div>

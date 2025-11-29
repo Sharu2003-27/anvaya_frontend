@@ -12,6 +12,9 @@ export default function SalesAgentView() {
   const [leads, setLeads] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newAgent, setNewAgent] = useState({ name: '', email: '' });
+  const [creatingAgent, setCreatingAgent] = useState(false);
+  const [showNewAgentForm, setShowNewAgentForm] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(searchParams.get('salesAgent') || '');
   const [filters, setFilters] = useState({
     status: searchParams.get('status') || '',
@@ -46,6 +49,39 @@ export default function SalesAgentView() {
     } catch (err) {
       console.error('Error loading agents:', err);
       addToast({ type: 'error', message: 'Unable to load agents.' });
+    }
+  };
+
+  const handleNewAgentChange = (e) => {
+    const { name, value } = e.target;
+    setNewAgent(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateAgent = async (e) => {
+    e.preventDefault();
+    if (!newAgent.name.trim() || !newAgent.email.trim()) return;
+
+    setCreatingAgent(true);
+    try {
+      const response = await agentsAPI.create({
+        name: newAgent.name.trim(),
+        email: newAgent.email.trim(),
+      });
+      addToast({ type: 'success', message: 'Sales agent added successfully.' });
+      setNewAgent({ name: '', email: '' });
+      setShowNewAgentForm(false);
+      await loadAgents();
+      // Optionally auto-select the newly created agent if returned
+      const createdId = response.data?.id;
+      if (createdId) {
+        setSelectedAgent(createdId);
+      }
+    } catch (err) {
+      const message = err.response?.data?.error || 'Error adding sales agent.';
+      console.error('Error adding agent:', err);
+      addToast({ type: 'error', message });
+    } finally {
+      setCreatingAgent(false);
     }
   };
 
@@ -133,10 +169,44 @@ export default function SalesAgentView() {
     <div className="sales-agent-view-container">
       <div className="agent-view-header">
         <h2>Leads by Sales Agent</h2>
-        <button onClick={() => navigate('/leads/new')} className="btn-primary">
-          Add New Lead
+        <button
+          onClick={() => setShowNewAgentForm(prev => !prev)}
+          className="btn-primary"
+        >
+          {showNewAgentForm ? 'Close' : 'Add New Sales Agent'}
         </button>
       </div>
+
+      {showNewAgentForm && (
+        <div className="agent-add-form">
+          <h3>Add New Sales Agent</h3>
+          <form onSubmit={handleCreateAgent} className="agent-add-form-inner">
+            <div className="form-group">
+              <label>Name *</label>
+              <input
+                type="text"
+                name="name"
+                value={newAgent.name}
+                onChange={handleNewAgentChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Email *</label>
+              <input
+                type="email"
+                name="email"
+                value={newAgent.email}
+                onChange={handleNewAgentChange}
+                required
+              />
+            </div>
+            <button type="submit" className="btn-primary" disabled={creatingAgent}>
+              {creatingAgent ? 'Saving...' : 'Save Agent'}
+            </button>
+          </form>
+        </div>
+      )}
 
       <div className="agent-selector">
         <label>Select Sales Agent:</label>
