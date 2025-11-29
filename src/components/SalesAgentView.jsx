@@ -22,6 +22,8 @@ export default function SalesAgentView() {
   });
   const [sortBy, setSortBy] = useState('timeToClose');
 
+  const isValidObjectId = (value) => /^[0-9a-fA-F]{24}$/.test(value || '');
+
   useEffect(() => {
     loadAgents();
   }, []);
@@ -41,10 +43,21 @@ export default function SalesAgentView() {
   const loadAgents = async () => {
     try {
       const response = await agentsAPI.getAll();
-      setAgents(response.data);
-      // If no agent selected from URL, select first agent
-      if (response.data.length > 0 && !selectedAgent) {
-        setSelectedAgent(response.data[0].id);
+      const agentsData = response.data || [];
+      setAgents(agentsData);
+
+      // If nothing selected, default to first agent
+      if (agentsData.length > 0 && !selectedAgent) {
+        setSelectedAgent(agentsData[0].id);
+        return;
+      }
+
+      // If URL param was an agent name, map it to id
+      if (selectedAgent && !isValidObjectId(selectedAgent)) {
+        const byName = agentsData.find(a => a.name === selectedAgent);
+        if (byName) {
+          setSelectedAgent(byName.id);
+        }
       }
     } catch (err) {
       console.error('Error loading agents:', err);
@@ -86,7 +99,10 @@ export default function SalesAgentView() {
   };
 
   const loadLeads = async () => {
-    if (!selectedAgent) {
+    // If no agent selected or the value is not a valid ObjectId yet,
+    // skip calling the API (this can happen on initial load when
+    // the URL contains a name instead of an id).
+    if (!selectedAgent || !isValidObjectId(selectedAgent)) {
       setLeads([]);
       setLoading(false);
       return;
