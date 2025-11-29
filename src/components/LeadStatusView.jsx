@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { leadsAPI, agentsAPI } from '../services/api';
+import { getTimeToCloseLabel, getTimeToCloseValue } from '../utils/leadUtils';
+import { useToast } from './ToastProvider';
 import './LeadStatusView.css';
+import '../styles/buttonTheme.css'; // ensure consistent button theme
 
 export default function LeadStatusView() {
   const navigate = useNavigate();
@@ -16,6 +19,7 @@ export default function LeadStatusView() {
     priority: searchParams.get('priority') || '',
   });
   const [sortBy, setSortBy] = useState('timeToClose');
+  const { addToast } = useToast();
 
   const statuses = ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Closed'];
 
@@ -42,6 +46,7 @@ export default function LeadStatusView() {
       setAgents(response.data);
     } catch (err) {
       console.error('Error loading agents:', err);
+      addToast({ type: 'error', message: 'Unable to load agents.' });
     }
   };
 
@@ -51,6 +56,7 @@ export default function LeadStatusView() {
       setAllLeads(response.data);
     } catch (err) {
       console.error('Error loading all leads:', err);
+      addToast({ type: 'error', message: 'Unable to load lead list.' });
     }
   };
 
@@ -72,7 +78,7 @@ export default function LeadStatusView() {
       // Sort by time to close
       leadsData.sort((a, b) => {
         if (sortBy === 'timeToClose') {
-          return a.timeToClose - b.timeToClose;
+          return getTimeToCloseValue(a) - getTimeToCloseValue(b);
         } else if (sortBy === 'priority') {
           const priorityOrder = { High: 3, Medium: 2, Low: 1 };
           return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
@@ -83,6 +89,7 @@ export default function LeadStatusView() {
       setLeads(leadsData);
     } catch (err) {
       console.error('Error loading leads:', err);
+      addToast({ type: 'error', message: 'Unable to load filtered leads.' });
     } finally {
       setLoading(false);
     }
@@ -150,9 +157,12 @@ export default function LeadStatusView() {
             onChange={(e) => handleFilterChange('salesAgent', e.target.value)}
           >
             <option value="">All Agents</option>
-            {agents.map(agent => (
-              <option key={agent.id} value={agent.id}>{agent.name}</option>
-            ))}
+            {agents.map(agent => {
+              const agentId = agent.id || agent._id;
+              return (
+                <option key={agentId} value={agentId}>{agent.name}</option>
+              );
+            })}
           </select>
         </div>
 
@@ -199,7 +209,7 @@ export default function LeadStatusView() {
                 </div>
                 <div className="lead-item-body">
                   <p><strong>Sales Agent:</strong> {lead.salesAgent?.name || 'N/A'}</p>
-                  <p><strong>Time to Close:</strong> {lead.timeToClose} days</p>
+                  <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
                   <p><strong>Source:</strong> {lead.source}</p>
                   {lead.tags && lead.tags.length > 0 && (
                     <div className="lead-tags">

@@ -22,6 +22,47 @@ export default function LeadList() {
   }, []);
 
   useEffect(() => {
+    const loadLeads = async () => {
+      setLoading(true);
+      try {
+        const filterParams = {};
+        if (filters.salesAgent) filterParams.salesAgent = filters.salesAgent;
+        if (filters.status) filterParams.status = filters.status;
+        if (filters.source) filterParams.source = filters.source;
+
+        const response = await leadsAPI.getAll(filterParams);
+        let leadsData = response.data;
+
+        // Sort leads
+        leadsData.sort((a, b) => {
+          let aVal, bVal;
+          if (sortBy === 'timeToClose') {
+            aVal = a.timeToClose;
+            bVal = b.timeToClose;
+          } else if (sortBy === 'priority') {
+            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
+            aVal = priorityOrder[a.priority] || 0;
+            bVal = priorityOrder[b.priority] || 0;
+          } else {
+            aVal = new Date(a.createdAt);
+            bVal = new Date(b.createdAt);
+          }
+
+          if (sortOrder === 'asc') {
+            return aVal > bVal ? 1 : -1;
+          } else {
+            return aVal < bVal ? 1 : -1;
+          }
+        });
+
+        setLeads(leadsData);
+      } catch (_err) {
+        console.error('Error loading leads:', _err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadLeads();
   }, [filters, sortBy, sortOrder]);
 
@@ -42,8 +83,6 @@ export default function LeadList() {
       console.error('Error loading agents:', err);
     }
   };
-
-  const loadLeads = async () => {
     setLoading(true);
     try {
       const filterParams = {};
@@ -77,8 +116,8 @@ export default function LeadList() {
       });
 
       setLeads(leadsData);
-    } catch (err) {
-      console.error('Error loading leads:', err);
+    } catch (_err) {
+      console.error('Error loading leads:', _err);
     } finally {
       setLoading(false);
     }
@@ -140,12 +179,9 @@ export default function LeadList() {
             onChange={(e) => handleFilterChange('salesAgent', e.target.value)}
           >
             <option value="">All Agents</option>
-            {agents.map(agent => {
-              const agentId = agent.id || agent._id;
-              return (
-                <option key={agentId} value={agentId}>{agent.name}</option>
-              );
-            })}
+            {agents.map(agent => (
+              <option key={agent.id} value={agent.id}>{agent.name}</option>
+            ))}
           </select>
         </div>
 

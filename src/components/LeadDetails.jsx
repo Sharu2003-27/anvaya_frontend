@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { leadsAPI, commentsAPI, agentsAPI } from '../services/api';
+import { getTimeToCloseLabel } from '../utils/leadUtils';
+import { useToast } from './ToastProvider';
 import './LeadDetails.css';
 
 export default function LeadDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [lead, setLead] = useState(null);
   const [comments, setComments] = useState([]);
   const [agents, setAgents] = useState([]);
@@ -24,8 +27,12 @@ export default function LeadDetails() {
     try {
       const response = await leadsAPI.getById(id);
       setLead(response.data);
+      if (response.data.salesAgent?.id || response.data.salesAgent?._id) {
+        setSelectedAgent(response.data.salesAgent.id || response.data.salesAgent._id);
+      }
     } catch (err) {
       console.error('Error loading lead:', err);
+      addToast({ type: 'error', message: 'Unable to load lead details.' });
     } finally {
       setLoading(false);
     }
@@ -37,6 +44,7 @@ export default function LeadDetails() {
       setComments(response.data);
     } catch (err) {
       console.error('Error loading comments:', err);
+      addToast({ type: 'error', message: 'Unable to load comments right now.' });
     }
   };
 
@@ -53,6 +61,7 @@ export default function LeadDetails() {
       }
     } catch (err) {
       console.error('Error loading agents:', err);
+      addToast({ type: 'error', message: 'Unable to load agents.' });
     }
   };
 
@@ -68,8 +77,10 @@ export default function LeadDetails() {
       });
       setCommentText('');
       loadComments();
+      addToast({ type: 'success', message: 'Comment added successfully.' });
     } catch (err) {
-      alert('Error adding comment: ' + (err.response?.data?.error || 'Unknown error'));
+      const message = err.response?.data?.error || 'Error adding comment.';
+      addToast({ type: 'error', message });
     } finally {
       setSubmittingComment(false);
     }
@@ -149,7 +160,7 @@ export default function LeadDetails() {
             </div>
             <div className="info-item">
               <label>Time to Close:</label>
-              <span>{lead.timeToClose} days</span>
+              <span>{getTimeToCloseLabel(lead)}</span>
             </div>
             <div className="info-item">
               <label>Created At:</label>

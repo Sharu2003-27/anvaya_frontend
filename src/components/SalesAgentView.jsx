@@ -15,10 +15,6 @@ export default function SalesAgentView() {
     priority: searchParams.get('priority') || '',
   });
   const [sortBy, setSortBy] = useState('timeToClose');
-  const [showAddAgentForm, setShowAddAgentForm] = useState(false);
-  const [newAgent, setNewAgent] = useState({ name: '', email: '' });
-  const [addingAgent, setAddingAgent] = useState(false);
-  const [agentFormMessage, setAgentFormMessage] = useState('');
 
   useEffect(() => {
     loadAgents();
@@ -39,11 +35,10 @@ export default function SalesAgentView() {
   const loadAgents = async () => {
     try {
       const response = await agentsAPI.getAll();
-      const fetchedAgents = response.data;
-      setAgents(fetchedAgents);
+      setAgents(response.data);
       // If no agent selected from URL, select first agent
-      if (fetchedAgents.length > 0 && !selectedAgent) {
-        setSelectedAgent(fetchedAgents[0].id || fetchedAgents[0]._id);
+      if (response.data.length > 0 && !selectedAgent) {
+        setSelectedAgent(response.data[0].id);
       }
     } catch (err) {
       console.error('Error loading agents:', err);
@@ -97,37 +92,6 @@ export default function SalesAgentView() {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleNewAgentChange = (e) => {
-    const { name, value } = e.target;
-    setNewAgent(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddAgent = async (e) => {
-    e.preventDefault();
-    if (!newAgent.name.trim() || !newAgent.email.trim()) {
-      setAgentFormMessage('Name and email are required.');
-      return;
-    }
-
-    setAddingAgent(true);
-    setAgentFormMessage('');
-    try {
-      const response = await agentsAPI.create({
-        name: newAgent.name.trim(),
-        email: newAgent.email.trim(),
-      });
-      setAgentFormMessage(`${response.data.name} added successfully.`);
-      setNewAgent({ name: '', email: '' });
-      await loadAgents();
-      setSelectedAgent(response.data.id);
-      setShowAddAgentForm(false);
-    } catch (err) {
-      setAgentFormMessage(err.response?.data?.error || 'Unable to add agent right now.');
-    } finally {
-      setAddingAgent(false);
-    }
-  };
-
   const getPriorityClass = (priority) => {
     const priorityClasses = {
       'High': 'priority-high',
@@ -148,7 +112,7 @@ export default function SalesAgentView() {
     return statusClasses[status] || '';
   };
 
-  const currentAgent = agents.find(a => (a.id || a._id) === selectedAgent);
+  const currentAgent = agents.find(a => a.id === selectedAgent);
 
   if (loading) {
     return <div className="loading">Loading leads...</div>;
@@ -163,52 +127,11 @@ export default function SalesAgentView() {
   return (
     <div className="sales-agent-view-container">
       <div className="agent-view-header">
-        <div>
-          <h2>Leads by Sales Agent</h2>
-          <p className="agent-view-help"></p>
-        </div>
-        <button
-          onClick={() => setShowAddAgentForm(prev => !prev)}
-          className="btn-primary"
-        >
-          {showAddAgentForm ? 'Close Form' : 'Add New Agent'}
+        <h2>Leads by Sales Agent</h2>
+        <button onClick={() => navigate('/leads/new')} className="btn-primary">
+          Add New Lead
         </button>
       </div>
-
-      {showAddAgentForm && (
-        <form className="add-agent-form" onSubmit={handleAddAgent}>
-          <div className="form-row">
-            <div className="form-field">
-              <label>Agent Name *</label>
-              <input
-                type="text"
-                name="name"
-                value={newAgent.name}
-                onChange={handleNewAgentChange}
-                placeholder="Jane Smith"
-                required
-              />
-            </div>
-            <div className="form-field">
-              <label>Email *</label>
-              <input
-                type="email"
-                name="email"
-                value={newAgent.email}
-                onChange={handleNewAgentChange}
-                placeholder="jane@example.com"
-                required
-              />
-            </div>
-          </div>
-          <div className="form-actions">
-            <button type="submit" disabled={addingAgent}>
-              {addingAgent ? 'Saving…' : 'Create Agent'}
-            </button>
-          </div>
-          {agentFormMessage && <p className="agent-form-feedback">{agentFormMessage}</p>}
-        </form>
-      )}
 
       <div className="agent-selector">
         <label>Select Sales Agent:</label>
@@ -218,20 +141,16 @@ export default function SalesAgentView() {
           className="agent-select"
         >
           <option value="">Select an agent</option>
-          {agents.map(agent => {
-            const agentId = agent.id || agent._id;
-            return (
-              <option key={agentId} value={agentId}>{agent.name}</option>
-            );
-          })}
+          {agents.map(agent => (
+            <option key={agent.id} value={agent.id}>{agent.name}</option>
+          ))}
         </select>
       </div>
 
       {selectedAgent && currentAgent && (
         <>
           <div className="agent-info">
-            <h3>{currentAgent.name}</h3>
-            <p>{currentAgent.email}</p>
+            <h3>Sales Agent: {currentAgent.name}</h3>
             <p>Total Leads: {filteredLeads.length}</p>
           </div>
 
@@ -298,7 +217,6 @@ export default function SalesAgentView() {
                       </div>
                     </div>
                     <div className="lead-item-body">
-                      <p><strong>Sales Agent:</strong> {currentAgent.name} ({currentAgent.email})</p>
                       <p><strong>Status:</strong> {lead.status}</p>
                       <p><strong>Time to Close:</strong> {lead.timeToClose} days</p>
                       <p><strong>Source:</strong> {lead.source}</p>

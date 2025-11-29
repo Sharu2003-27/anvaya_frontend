@@ -44,11 +44,6 @@ export default function Nav() {
               Reports
             </Link>
           </li>
-          <li>
-            <Link to="/settings" className={isActive('/settings') ? 'active' : ''}>
-              Settings
-            </Link>
-          </li>
         </ul>
       </div>
     </nav>

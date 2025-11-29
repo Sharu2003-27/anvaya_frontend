@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { leadsAPI, agentsAPI, tagsAPI } from '../services/api';
+import { useToast } from './ToastProvider';
 import './LeadForm.css';
+import '../styles/buttonTheme.css'; // newly added shared button theme
 
 export default function LeadForm({ onSuccess }) {
   const navigate = useNavigate();
   const { id: leadId } = useParams();
+  const { addToast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     source: 'Website',
@@ -20,9 +23,6 @@ export default function LeadForm({ onSuccess }) {
   const [availableTags, setAvailableTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [newTagName, setNewTagName] = useState('');
-  const [tagFeedback, setTagFeedback] = useState('');
-  const [isAddingTag, setIsAddingTag] = useState(false);
 
   const leadSources = ['Website', 'Referral', 'Cold Call', 'Advertisement', 'Email', 'Other'];
   const statuses = ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Closed'];
@@ -42,6 +42,7 @@ export default function LeadForm({ onSuccess }) {
       setAgents(response.data);
     } catch (err) {
       console.error('Error loading agents:', err);
+      addToast({ type: 'error', message: 'Unable to load agents.' });
     }
   };
 
@@ -51,6 +52,7 @@ export default function LeadForm({ onSuccess }) {
       setAvailableTags(response.data.map(tag => tag.name));
     } catch (err) {
       console.error('Error loading tags:', err);
+      addToast({ type: 'error', message: 'Unable to load tags.' });
     }
   };
 
@@ -63,18 +65,24 @@ export default function LeadForm({ onSuccess }) {
         source: lead.source,
         salesAgent: lead.salesAgent?.id || lead.salesAgent?._id,
         status: lead.status,
-        tags: lead.tags || [],
+        // normalize tags: array of strings or objects
+        tags: (lead.tags || []).map(t => (typeof t === 'string' ? t : t.name)),
         timeToClose: lead.timeToClose,
         priority: lead.priority,
       });
     } catch (error) {
       setError('Error loading lead details', error);
+      addToast({ type: 'error', message: 'Error loading lead details.' });
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // convert numeric field to number
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'timeToClose' ? Number(value) : value,
+    }));
   };
 
   const handleTagToggle = (tag) => {
@@ -86,32 +94,6 @@ export default function LeadForm({ onSuccess }) {
     }));
   };
 
-  const handleAddTag = async () => {
-    const trimmedTag = newTagName.trim();
-    if (!trimmedTag) {
-      setTagFeedback('Enter a tag name to add it to the list.');
-      return;
-    }
-
-    setIsAddingTag(true);
-    setTagFeedback('');
-    try {
-      const response = await tagsAPI.create({ name: trimmedTag });
-      const createdTag = response.data.name || trimmedTag;
-      setAvailableTags(prev => Array.from(new Set([...prev, createdTag])));
-      setFormData(prev => ({
-        ...prev,
-        tags: prev.tags.includes(createdTag) ? prev.tags : [...prev.tags, createdTag],
-      }));
-      setNewTagName('');
-      setTagFeedback(`Tag "${createdTag}" added and selected.`);
-    } catch (err) {
-      setTagFeedback(err.response?.data?.error || 'Unable to add tag right now.');
-    } finally {
-      setIsAddingTag(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -120,8 +102,10 @@ export default function LeadForm({ onSuccess }) {
     try {
       if (leadId) {
         await leadsAPI.update(leadId, formData);
+        addToast({ type: 'success', message: 'Lead updated successfully.' });
       } else {
         await leadsAPI.create(formData);
+        addToast({ type: 'success', message: 'Lead created successfully.' });
       }
       if (onSuccess) {
         onSuccess();
@@ -129,7 +113,9 @@ export default function LeadForm({ onSuccess }) {
         navigate('/leads');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Error saving lead');
+      const message = err.response?.data?.error || 'Error saving lead';
+      setError(message);
+      addToast({ type: 'error', message });
     } finally {
       setLoading(false);
     }
@@ -234,27 +220,6 @@ export default function LeadForm({ onSuccess }) {
               </label>
             ))}
           </div>
-          {availableTags.length === 0 && (
-            <p className="lead-form-note"></p>
-          )}
-          <div className="tag-actions">
-            <input
-              type="text"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddTag();
-                }
-              }}
-              placeholder="Type a tag name"
-            />
-            <button type="button" onClick={handleAddTag} disabled={isAddingTag}>
-              {isAddingTag ? 'Adding…' : 'Add Tag'}
-            </button>
-          </div>
-          {tagFeedback && <p className="tag-feedback">{tagFeedback}</p>}
         </div>
 
         <div className="form-actions">
