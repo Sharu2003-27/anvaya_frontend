@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { leadsAPI, agentsAPI } from '../services/api';
+import { getTimeToCloseLabel, getTimeToCloseValue } from '../utils/leadUtils';
+import { useToast } from './ToastProvider';
 import './SalesAgentView.css';
 
 export default function SalesAgentView() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addToast } = useToast();
   const [leads, setLeads] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,7 @@ export default function SalesAgentView() {
       }
     } catch (err) {
       console.error('Error loading agents:', err);
+      addToast({ type: 'error', message: 'Unable to load agents.' });
     }
   };
 
@@ -69,7 +73,7 @@ export default function SalesAgentView() {
       // Sort leads
       leadsData.sort((a, b) => {
         if (sortBy === 'timeToClose') {
-          return a.timeToClose - b.timeToClose;
+          return getTimeToCloseValue(a) - getTimeToCloseValue(b);
         } else if (sortBy === 'status') {
           const statusOrder = { 'New': 1, 'Contacted': 2, 'Qualified': 3, 'Proposal Sent': 4, 'Closed': 5 };
           return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
@@ -83,6 +87,7 @@ export default function SalesAgentView() {
       setLeads(leadsData);
     } catch (err) {
       console.error('Error loading leads:', err);
+      addToast({ type: 'error', message: 'Unable to load leads for this agent.' });
     } finally {
       setLoading(false);
     }
@@ -215,10 +220,10 @@ export default function SalesAgentView() {
                           {lead.priority}
                         </span>
                       </div>
-                    </div>
-                    <div className="lead-item-body">
-                      <p><strong>Status:</strong> {lead.status}</p>
-                      <p><strong>Time to Close:</strong> {lead.timeToClose} days</p>
+                  </div>
+                  <div className="lead-item-body">
+                    <p><strong>Status:</strong> {lead.status}</p>
+                    <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
                       <p><strong>Source:</strong> {lead.source}</p>
                       {lead.tags && lead.tags.length > 0 && (
                         <div className="lead-tags">

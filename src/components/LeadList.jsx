@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { leadsAPI, agentsAPI } from '../services/api';
+import { getTimeToCloseLabel, getTimeToCloseValue } from '../utils/leadUtils';
+import { useToast } from './ToastProvider';
 import './LeadList.css';
 
 export default function LeadList() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { addToast } = useToast();
   const [leads, setLeads] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,68 +24,7 @@ export default function LeadList() {
     loadAgents();
   }, []);
 
-  useEffect(() => {
-    const loadLeads = async () => {
-      setLoading(true);
-      try {
-        const filterParams = {};
-        if (filters.salesAgent) filterParams.salesAgent = filters.salesAgent;
-        if (filters.status) filterParams.status = filters.status;
-        if (filters.source) filterParams.source = filters.source;
-
-        const response = await leadsAPI.getAll(filterParams);
-        let leadsData = response.data;
-
-        // Sort leads
-        leadsData.sort((a, b) => {
-          let aVal, bVal;
-          if (sortBy === 'timeToClose') {
-            aVal = a.timeToClose;
-            bVal = b.timeToClose;
-          } else if (sortBy === 'priority') {
-            const priorityOrder = { High: 3, Medium: 2, Low: 1 };
-            aVal = priorityOrder[a.priority] || 0;
-            bVal = priorityOrder[b.priority] || 0;
-          } else {
-            aVal = new Date(a.createdAt);
-            bVal = new Date(b.createdAt);
-          }
-
-          if (sortOrder === 'asc') {
-            return aVal > bVal ? 1 : -1;
-          } else {
-            return aVal < bVal ? 1 : -1;
-          }
-        });
-
-        setLeads(leadsData);
-      } catch (_err) {
-        console.error('Error loading leads:', _err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadLeads();
-  }, [filters, sortBy, sortOrder]);
-
-  useEffect(() => {
-    // Update URL when filters change
-    const params = new URLSearchParams();
-    if (filters.salesAgent) params.set('salesAgent', filters.salesAgent);
-    if (filters.status) params.set('status', filters.status);
-    if (filters.source) params.set('source', filters.source);
-    setSearchParams(params);
-  }, [filters]);
-
-  const loadAgents = async () => {
-    try {
-      const response = await agentsAPI.getAll();
-      setAgents(response.data);
-    } catch (err) {
-      console.error('Error loading agents:', err);
-    }
-  };
+  const loadLeads = async () => {
     setLoading(true);
     try {
       const filterParams = {};
@@ -97,8 +39,8 @@ export default function LeadList() {
       leadsData.sort((a, b) => {
         let aVal, bVal;
         if (sortBy === 'timeToClose') {
-          aVal = a.timeToClose;
-          bVal = b.timeToClose;
+          aVal = getTimeToCloseValue(a);
+          bVal = getTimeToCloseValue(b);
         } else if (sortBy === 'priority') {
           const priorityOrder = { High: 3, Medium: 2, Low: 1 };
           aVal = priorityOrder[a.priority] || 0;
@@ -118,8 +60,33 @@ export default function LeadList() {
       setLeads(leadsData);
     } catch (_err) {
       console.error('Error loading leads:', _err);
+      addToast({ type: 'error', message: 'Unable to load leads.' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sortBy, sortOrder]);
+
+  useEffect(() => {
+    // Update URL when filters change
+    const params = new URLSearchParams();
+    if (filters.salesAgent) params.set('salesAgent', filters.salesAgent);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.source) params.set('source', filters.source);
+    setSearchParams(params);
+  }, [filters]);
+
+  const loadAgents = async () => {
+    try {
+      const response = await agentsAPI.getAll();
+      setAgents(response.data);
+    } catch (err) {
+      console.error('Error loading agents:', err);
+      addToast({ type: 'error', message: 'Unable to load agents.' });
     }
   };
 
@@ -131,9 +98,11 @@ export default function LeadList() {
     if (window.confirm('Are you sure you want to delete this lead?')) {
       try {
         await leadsAPI.delete(id);
+        addToast({ type: 'success', message: 'Lead deleted successfully.' });
         loadLeads();
       } catch (err) {
-        alert('Error deleting lead');
+        console.error('Error deleting lead:', err);
+        addToast({ type: 'error', message: 'Error deleting lead.' });
       }
     }
   };
@@ -262,7 +231,7 @@ export default function LeadList() {
                     {lead.priority}
                   </span>
                 </p>
-                <p><strong>Time to Close:</strong> {lead.timeToClose} days</p>
+                <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
                 {lead.tags && lead.tags.length > 0 && (
                   <div className="lead-tags">
                     {lead.tags.map((tag, idx) => (

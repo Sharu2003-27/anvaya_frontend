@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { reportsAPI } from '../services/api';
+import { useToast } from './ToastProvider';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,6 +25,7 @@ ChartJS.register(
 );
 
 export default function Reports() {
+  const { addToast } = useToast();
   const [lastWeekData, setLastWeekData] = useState([]);
   const [pipelineData, setPipelineData] = useState(null);
   const [closedByAgent, setClosedByAgent] = useState([]);
@@ -50,6 +52,7 @@ export default function Reports() {
       setStatusDistribution(statusDist.data);
     } catch (err) {
       console.error('Error loading reports:', err);
+      addToast({ type: 'error', message: 'Unable to load reports.' });
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { leadsAPI, reportsAPI } from '../services/api';
+import { useToast } from '../components/ToastProvider';
 import './Home.css';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [leads, setLeads] = useState([]);
   const [statusCounts, setStatusCounts] = useState({});
   const [pipelineTotal, setPipelineTotal] = useState(0);
@@ -35,6 +37,7 @@ export default function Home() {
       setPipelineTotal(pipelineResponse.data.totalLeadsInPipeline || 0);
     } catch (err) {
       console.error('Error loading dashboard data:', err);
+      addToast({ type: 'error', message: 'Unable to load dashboard data.' });
     } finally {
       setLoading(false);
     }
