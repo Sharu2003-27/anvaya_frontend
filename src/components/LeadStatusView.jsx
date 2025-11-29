@@ -119,10 +119,6 @@ export default function LeadStatusView() {
     return statusClasses[status] || '';
   };
 
-  if (loading) {
-    return <div className="loading">Loading leads...</div>;
-  }
-
   const filteredLeads = leads.filter(lead => {
     if (filters.priority && lead.priority !== filters.priority) return false;
     return true;
@@ -193,39 +189,43 @@ export default function LeadStatusView() {
 
       <div className="status-leads-section">
         <h3>Status: {selectedStatus}</h3>
-        <div className="leads-list">
-          {filteredLeads.length === 0 ? (
-            <div className="no-leads">No leads found for this status.</div>
-          ) : (
-            filteredLeads.map(lead => (
-              <div key={lead.id} className="lead-item">
-                <div className="lead-item-header">
-                  <h4 onClick={() => navigate(`/leads/${lead.id}`)} className="lead-name">
-                    {lead.name}
-                  </h4>
-                  <span className={`priority-badge ${getPriorityClass(lead.priority)}`}>
-                    {lead.priority}
-                  </span>
+        {loading ? (
+          <div className="loading">Loading leads...</div>
+        ) : (
+          <div className="leads-list">
+            {filteredLeads.length === 0 ? (
+              <div className="no-leads">No leads found for this status.</div>
+            ) : (
+              filteredLeads.map(lead => (
+                <div key={lead.id} className="lead-item">
+                  <div className="lead-item-header">
+                    <h4 onClick={() => navigate(`/leads/${lead.id}`)} className="lead-name">
+                      {lead.name}
+                    </h4>
+                    <span className={`priority-badge ${getPriorityClass(lead.priority)}`}>
+                      {lead.priority}
+                    </span>
+                  </div>
+                  <div className="lead-item-body">
+                    <p><strong>Sales Agent:</strong> {lead.salesAgent?.name || 'N/A'}</p>
+                    <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
+                    <p><strong>Source:</strong> {lead.source}</p>
+                    {lead.tags && lead.tags.length > 0 && (
+                      <div className="lead-tags">
+                        {lead.tags.map((tag, idx) => (
+                          <span key={idx} className="tag">{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="lead-item-actions">
+                    <button onClick={() => navigate(`/leads/${lead.id}`)}>View Details</button>
+                  </div>
                 </div>
-                <div className="lead-item-body">
-                  <p><strong>Sales Agent:</strong> {lead.salesAgent?.name || 'N/A'}</p>
-                  <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
-                  <p><strong>Source:</strong> {lead.source}</p>
-                  {lead.tags && lead.tags.length > 0 && (
-                    <div className="lead-tags">
-                      {lead.tags.map((tag, idx) => (
-                        <span key={idx} className="tag">{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="lead-item-actions">
-                  <button onClick={() => navigate(`/leads/${lead.id}`)}>View Details</button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

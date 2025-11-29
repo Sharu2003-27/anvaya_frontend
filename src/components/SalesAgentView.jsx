@@ -46,17 +46,23 @@ export default function SalesAgentView() {
       const agentsData = response.data || [];
       setAgents(agentsData);
 
-      // If nothing selected, default to first agent
+      // If nothing selected, default to first agent (use id or _id from API)
       if (agentsData.length > 0 && !selectedAgent) {
-        setSelectedAgent(agentsData[0].id);
+        const firstId = agentsData[0].id || agentsData[0]._id;
+        if (firstId) {
+          setSelectedAgent(firstId);
+        }
         return;
       }
 
-      // If URL param was an agent name, map it to id
+      // If URL param was an agent name, map it to its id / _id
       if (selectedAgent && !isValidObjectId(selectedAgent)) {
         const byName = agentsData.find(a => a.name === selectedAgent);
         if (byName) {
-          setSelectedAgent(byName.id);
+          const mappedId = byName.id || byName._id;
+          if (mappedId) {
+            setSelectedAgent(mappedId);
+          }
         }
       }
     } catch (err) {
@@ -169,7 +175,7 @@ export default function SalesAgentView() {
     return statusClasses[status] || '';
   };
 
-  const currentAgent = agents.find(a => a.id === selectedAgent);
+  const currentAgent = agents.find(a => (a.id || a._id) === selectedAgent);
 
   if (loading) {
     return <div className="loading">Loading leads...</div>;
@@ -232,9 +238,12 @@ export default function SalesAgentView() {
           className="agent-select"
         >
           <option value="">Select an agent</option>
-          {agents.map(agent => (
-            <option key={agent.id} value={agent.id}>{agent.name}</option>
-          ))}
+          {agents.map(agent => {
+            const agentId = agent.id || agent._id;
+            return (
+              <option key={agentId} value={agentId}>{agent.name}</option>
+            );
+          })}
         </select>
       </div>
 

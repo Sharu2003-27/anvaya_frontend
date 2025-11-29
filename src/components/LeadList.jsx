@@ -148,9 +148,12 @@ export default function LeadList() {
             onChange={(e) => handleFilterChange('salesAgent', e.target.value)}
           >
             <option value="">All Agents</option>
-            {agents.map(agent => (
-              <option key={agent.id} value={agent.id}>{agent.name}</option>
-            ))}
+            {agents.map(agent => {
+              const agentId = agent.id || agent._id;
+              return (
+                <option key={agentId} value={agentId}>{agent.name}</option>
+              );
+            })}
           </select>
         </div>
 
