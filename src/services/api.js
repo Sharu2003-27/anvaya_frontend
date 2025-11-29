@@ -35,6 +35,7 @@ export const leadsAPI = {
 export const agentsAPI = {
   getAll: () => api.get('/agents'),
   create: (data) => api.post('/agents', data),
+  delete: (id) => api.delete(`/agents/${id}`),
 };
 
 // Comments API

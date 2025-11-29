@@ -8,6 +8,7 @@ import LeadDetails from './components/LeadDetails';
 import LeadStatusView from './components/LeadStatusView';
 import SalesAgentView from './components/SalesAgentView';
 import Reports from './components/Reports';
+import Settings from './components/Settings';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/leads/status" element={<LeadStatusView />} />
             <Route path="/leads/agents" element={<SalesAgentView />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
       </div>

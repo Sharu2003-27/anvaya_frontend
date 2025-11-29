@@ -58,7 +58,7 @@ export default function Reports() {
     }
   };
 
-  // Chart data for leads closed last week
+
   const lastWeekChartData = {
     labels: lastWeekData.map(lead => lead.name),
     datasets: [

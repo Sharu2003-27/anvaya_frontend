@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { leadsAPI, agentsAPI, tagsAPI } from '../services/api';
 import { useToast } from './ToastProvider';
 import './LeadForm.css';
-import '../styles/buttonTheme.css'; // newly added shared button theme
+import '../styles/buttonTheme.css';
 
 export default function LeadForm({ onSuccess }) {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ export default function LeadForm({ onSuccess }) {
   const [agents, setAgents] = useState([]);
   // const [tags, setTags] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
+  const [newTagName, setNewTagName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,7 +79,6 @@ export default function LeadForm({ onSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // convert numeric field to number
     setFormData(prev => ({
       ...prev,
       [name]: name === 'timeToClose' ? Number(value) : value,
@@ -92,6 +92,36 @@ export default function LeadForm({ onSuccess }) {
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag],
     }));
+  };
+
+  const handleAddTag = async () => {
+    const trimmed = newTagName.trim();
+    if (!trimmed) return;
+
+    try {
+      const response = await tagsAPI.create({ name: trimmed });
+      const createdName = response.data?.name || trimmed;
+
+      // Add to available options if not present
+      setAvailableTags(prev => (
+        prev.includes(createdName) ? prev : [...prev, createdName]
+      ));
+
+      // Also select this tag for the current lead
+      setFormData(prev => ({
+        ...prev,
+        tags: prev.tags.includes(createdName)
+          ? prev.tags
+          : [...prev.tags, createdName],
+      }));
+
+      setNewTagName('');
+      addToast({ type: 'success', message: 'Tag added.' });
+    } catch (err) {
+      const message = err.response?.data?.error || 'Error adding tag';
+      console.error('Error adding tag:', err);
+      addToast({ type: 'error', message });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -208,6 +238,23 @@ export default function LeadForm({ onSuccess }) {
 
         <div className="form-group">
           <label>Tags</label>
+          <small className="field-hint">Choose existing tags or add a new one.</small>
+          <div className="tag-add-row">
+            <input
+              type="text"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              placeholder="Enter new tag name"
+            />
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleAddTag}
+              disabled={!newTagName.trim()}
+            >
+              Add Tag
+            </button>
+          </div>
           <div className="tags-container">
             {availableTags.map(tag => (
               <label key={tag} className="tag-checkbox">

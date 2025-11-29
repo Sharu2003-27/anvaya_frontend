@@ -156,6 +156,9 @@ export default function SalesAgentView() {
         <>
           <div className="agent-info">
             <h3>Sales Agent: {currentAgent.name}</h3>
+            {currentAgent.email && (
+              <p>Email: {currentAgent.email}</p>
+            )}
             <p>Total Leads: {filteredLeads.length}</p>
           </div>
 
@@ -224,7 +227,10 @@ export default function SalesAgentView() {
                   <div className="lead-item-body">
                     <p><strong>Status:</strong> {lead.status}</p>
                     <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
-                      <p><strong>Source:</strong> {lead.source}</p>
+                    {currentAgent && (
+                      <p><strong>Sales Agent:</strong> {currentAgent.name}{currentAgent.email ? ` (${currentAgent.email})` : ''}</p>
+                    )}
+                    <p><strong>Source:</strong> {lead.source}</p>
                       {lead.tags && lead.tags.length > 0 && (
                         <div className="lead-tags">
                           {lead.tags.map((tag, idx) => (
