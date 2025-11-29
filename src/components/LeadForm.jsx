@@ -238,7 +238,6 @@ export default function LeadForm({ onSuccess }) {
 
         <div className="form-group">
           <label>Tags</label>
-          <small className="field-hint">Choose existing tags or add a new one.</small>
           <div className="tag-add-row">
             <input
               type="text"

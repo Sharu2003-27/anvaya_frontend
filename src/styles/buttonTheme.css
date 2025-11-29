@@ -1,4 +1,3 @@
-/* Shared button theme - applies to .btn and .btn-primary so settings page buttons match */
 .btn,
 .btn-primary {
   display: inline-block;
@@ -22,4 +21,10 @@
 .btn:hover,
 .btn-primary:hover {
   background-color: #1367c6;
+}
+
+.tag-add-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
