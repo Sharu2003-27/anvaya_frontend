@@ -1,85 +1,73 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { leadsAPI, agentsAPI } from '../services/api';
-import { getTimeToCloseLabel, getTimeToCloseValue } from '../utils/leadUtils';
-import { useToast } from './ToastProvider';
-import './LeadStatusView.css';
-import '../styles/buttonTheme.css'; // ensure consistent button theme
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { leadsAPI, agentsAPI } from "../services/api";
+import { getTimeToCloseLabel, getTimeToCloseValue } from "../utils/leadUtils";
+import { useToast } from "./ToastProvider";
+import "./LeadStatusView.css";
+import "../styles/buttonTheme.css";
 
 export default function LeadStatusView() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [allLeads, setAllLeads] = useState([]); 
-  const [leads, setLeads] = useState([]); 
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || 'New');
-  const [filters, setFilters] = useState({
-    salesAgent: searchParams.get('salesAgent') || '',
-    priority: searchParams.get('priority') || '',
-  });
-  const [sortBy, setSortBy] = useState('timeToClose');
   const { addToast } = useToast();
 
-  const statuses = ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Closed'];
+  const [allLeads, setAllLeads] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAgents();
-    loadAllLeads(); 
-  }, []);
+  const [selectedStatus, setSelectedStatus] = useState("New");
+  const [filters, setFilters] = useState({
+    salesAgent: "",
+    priority: "",
+  });
+  const [sortBy, setSortBy] = useState("timeToClose");
 
-  useEffect(() => {
-    loadLeads();
-  }, [selectedStatus, filters, sortBy]);
+  const statuses = ["New", "Contacted", "Qualified", "Proposal Sent", "Closed"];
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedStatus) params.set('status', selectedStatus);
-    if (filters.salesAgent) params.set('salesAgent', filters.salesAgent);
-    if (filters.priority) params.set('priority', filters.priority);
-    setSearchParams(params);
-  }, [selectedStatus, filters]);
-
-  const loadAgents = async () => {
+  // Load Agents
+  const loadAgents = useCallback(async () => {
     try {
       const response = await agentsAPI.getAll();
       setAgents(response.data);
     } catch (err) {
-      console.error('Error loading agents:', err);
-      addToast({ type: 'error', message: 'Unable to load agents.' });
+      console.error("Error loading agents:", err);
+      addToast({ type: "error", message: "Unable to load agents." });
     }
-  };
+  }, [addToast]);
 
-  const loadAllLeads = async () => {
+  // Load All Leads (only once)
+  const loadAllLeads = useCallback(async () => {
     try {
       const response = await leadsAPI.getAll();
       setAllLeads(response.data);
     } catch (err) {
-      console.error('Error loading all leads:', err);
-      addToast({ type: 'error', message: 'Unable to load lead list.' });
+      console.error("Error loading all leads:", err);
+      addToast({ type: "error", message: "Unable to load lead list." });
     }
-  };
+  }, [addToast]);
 
-  const loadLeads = async () => {
+  // Load filtered leads
+  const loadLeads = useCallback(async () => {
     setLoading(true);
     try {
       const filterParams = {
         status: selectedStatus,
         ...filters,
       };
-      // Remove empty filters
-      Object.keys(filterParams).forEach(key => {
+
+      // Remove empty keys
+      Object.keys(filterParams).forEach((key) => {
         if (!filterParams[key]) delete filterParams[key];
       });
 
       const response = await leadsAPI.getAll(filterParams);
       let leadsData = response.data;
 
-      // Sort by time to close
+      // Sorting
       leadsData.sort((a, b) => {
-        if (sortBy === 'timeToClose') {
+        if (sortBy === "timeToClose") {
           return getTimeToCloseValue(a) - getTimeToCloseValue(b);
-        } else if (sortBy === 'priority') {
+        } else if (sortBy === "priority") {
           const priorityOrder = { High: 3, Medium: 2, Low: 1 };
           return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
         }
@@ -88,38 +76,36 @@ export default function LeadStatusView() {
 
       setLeads(leadsData);
     } catch (err) {
-      console.error('Error loading leads:', err);
-      addToast({ type: 'error', message: 'Unable to load filtered leads.' });
+      console.error("Error loading leads:", err);
+      addToast({ type: "error", message: "Unable to load filtered leads." });
     } finally {
       setLoading(false);
     }
-  };
+  }, [addToast, filters, selectedStatus, sortBy]);
+
+  useEffect(() => {
+    loadAgents();
+    loadAllLeads();
+  }, [loadAgents, loadAllLeads]);
+
+  useEffect(() => {
+    loadLeads();
+  }, [loadLeads]);
 
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const getPriorityClass = (priority) => {
     const priorityClasses = {
-      'High': 'priority-high',
-      'Medium': 'priority-medium',
-      'Low': 'priority-low',
+      High: "priority-high",
+      Medium: "priority-medium",
+      Low: "priority-low",
     };
-    return priorityClasses[priority] || '';
+    return priorityClasses[priority] || "";
   };
 
-  const getStatusClass = (status) => {
-    const statusClasses = {
-      'New': 'status-new',
-      'Contacted': 'status-contacted',
-      'Qualified': 'status-qualified',
-      'Proposal Sent': 'status-proposal',
-      'Closed': 'status-closed',
-    };
-    return statusClasses[status] || '';
-  };
-
-  const filteredLeads = leads.filter(lead => {
+  const filteredLeads = leads.filter((lead) => {
     if (filters.priority && lead.priority !== filters.priority) return false;
     return true;
   });
@@ -128,19 +114,19 @@ export default function LeadStatusView() {
     <div className="lead-status-view-container">
       <div className="status-view-header">
         <h2>Leads by Status</h2>
-        <button onClick={() => navigate('/leads/new')} className="btn-primary">
+        <button onClick={() => navigate("/leads/new")} className="btn-primary">
           Add New Lead
         </button>
       </div>
 
       <div className="status-selector">
-        {statuses.map(status => (
+        {statuses.map((status) => (
           <button
             key={status}
-            className={`status-tab ${selectedStatus === status ? 'active' : ''}`}
+            className={`status-tab ${selectedStatus === status ? "active" : ""}`}
             onClick={() => setSelectedStatus(status)}
           >
-            {status} ({allLeads.filter(l => l.status === status).length})
+            {status} ({allLeads.filter((l) => l.status === status).length})
           </button>
         ))}
       </div>
@@ -150,13 +136,15 @@ export default function LeadStatusView() {
           <label>Filter by Sales Agent:</label>
           <select
             value={filters.salesAgent}
-            onChange={(e) => handleFilterChange('salesAgent', e.target.value)}
+            onChange={(e) => handleFilterChange("salesAgent", e.target.value)}
           >
             <option value="">All Agents</option>
-            {agents.map(agent => {
+            {agents.map((agent) => {
               const agentId = agent.id || agent._id;
               return (
-                <option key={agentId} value={agentId}>{agent.name}</option>
+                <option key={agentId} value={agentId}>
+                  {agent.name}
+                </option>
               );
             })}
           </select>
@@ -166,7 +154,7 @@ export default function LeadStatusView() {
           <label>Filter by Priority:</label>
           <select
             value={filters.priority}
-            onChange={(e) => handleFilterChange('priority', e.target.value)}
+            onChange={(e) => handleFilterChange("priority", e.target.value)}
           >
             <option value="">All Priorities</option>
             <option value="High">High</option>
@@ -177,10 +165,7 @@ export default function LeadStatusView() {
 
         <div className="filter-group">
           <label>Sort By:</label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             <option value="timeToClose">Time to Close</option>
             <option value="priority">Priority</option>
           </select>
@@ -196,30 +181,45 @@ export default function LeadStatusView() {
             {filteredLeads.length === 0 ? (
               <div className="no-leads">No leads found for this status.</div>
             ) : (
-              filteredLeads.map(lead => (
+              filteredLeads.map((lead) => (
                 <div key={lead.id} className="lead-item">
                   <div className="lead-item-header">
-                    <h4 onClick={() => navigate(`/leads/${lead.id}`)} className="lead-name">
+                    <h4
+                      onClick={() => navigate(`/leads/${lead.id}`)}
+                      className="lead-name"
+                    >
                       {lead.name}
                     </h4>
                     <span className={`priority-badge ${getPriorityClass(lead.priority)}`}>
                       {lead.priority}
                     </span>
                   </div>
+
                   <div className="lead-item-body">
-                    <p><strong>Sales Agent:</strong> {lead.salesAgent?.name || 'N/A'}</p>
-                    <p><strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}</p>
-                    <p><strong>Source:</strong> {lead.source}</p>
+                    <p>
+                      <strong>Sales Agent:</strong> {lead.salesAgent?.name || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Time to Close:</strong> {getTimeToCloseLabel(lead)}
+                    </p>
+                    <p>
+                      <strong>Source:</strong> {lead.source}
+                    </p>
                     {lead.tags && lead.tags.length > 0 && (
                       <div className="lead-tags">
                         {lead.tags.map((tag, idx) => (
-                          <span key={idx} className="tag">{tag}</span>
+                          <span key={idx} className="tag">
+                            {tag}
+                          </span>
                         ))}
                       </div>
                     )}
                   </div>
+
                   <div className="lead-item-actions">
-                    <button onClick={() => navigate(`/leads/${lead.id}`)}>View Details</button>
+                    <button onClick={() => navigate(`/leads/${lead.id}`)}>
+                      View Details
+                    </button>
                   </div>
                 </div>
               ))
