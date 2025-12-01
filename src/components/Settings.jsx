@@ -31,34 +31,16 @@ export default function Settings() {
 
   const handleDeleteAgent = async (id) => {
     if (!window.confirm('Are you sure you want to delete this agent?')) return;
+
     try {
       await agentsAPI.delete(id);
       addToast({ type: 'success', message: 'Agent deleted successfully.' });
-      loadAgents();
+
+      loadAgents(); 
     } catch (err) {
       const message = err.response?.data?.error || 'Error deleting agent.';
       console.error('Error deleting agent:', err);
       addToast({ type: 'error', message });
-    }
-  };
-
-  const handleCreateTag = async (e) => {
-    e.preventDefault();
-    const trimmed = newTagName.trim();
-    if (!trimmed) return;
-
-    setCreatingTag(true);
-    try {
-      await tagsAPI.create({ name: trimmed });
-      addToast({ type: 'success', message: 'Tag added successfully.' });
-      setNewTagName('');
-      loadTags();
-    } catch (err) {
-      const message = err.response?.data?.error || 'Error adding tag.';
-      console.error('Error adding tag:', err);
-      addToast({ type: 'error', message });
-    } finally {
-      setCreatingTag(false);
     }
   };
 
@@ -81,6 +63,7 @@ export default function Settings() {
         <div className="settings-grid">
           <div className="settings-card">
             <h4>All Sales Agents</h4>
+
             {agentsLoading ? (
               <div className="loading">Loading agents...</div>
             ) : agents.length === 0 ? (
@@ -94,30 +77,30 @@ export default function Settings() {
                     <th>Actions</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {agents.map(agent => (
-                    <tr key={agent.id}>
-                      <td>{agent.name}</td>
-                      <td>{agent.email}</td>
-                      <td className="settings-actions">
-                        <button
-                          type="button"
-                          className="btn"
-                          onClick={() => handleViewAgentLeads(agent.id)}
-                        >
-                          View Leads
-                        </button>
-                        <button
-                          type="button"
-                          className="btn"
-                          onClick={() => handleDeleteAgent(agent.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {agents.map((agent) => {
+                    const agentId = agent.id || agent._id;
+
+                    return (
+                      <tr key={agentId}>
+                        <td>{agent.name}</td>
+                        <td>{agent.email}</td>
+
+                        <td className="settings-actions">
+                          <button className="btn" onClick={() => handleViewAgentLeads(agentId)}>
+                            View Leads
+                          </button>
+
+                          <button className="btn" onClick={() => handleDeleteAgent(agentId)}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
+
               </table>
             )}
           </div>
