@@ -33,12 +33,11 @@ export default function SalesAgentView() {
   }, [selectedAgent, filters, sortBy]);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedAgent) params.set('salesAgent', selectedAgent);
-    if (filters.status) params.set('status', filters.status);
-    if (filters.priority) params.set('priority', filters.priority);
-    setSearchParams(params);
-  }, [selectedAgent, filters]);
+  const params = new URLSearchParams();
+  if (selectedAgent) params.set('salesAgent', selectedAgent);
+  setSearchParams(params);
+}, [selectedAgent]);
+
 
   const loadAgents = async () => {
     try {

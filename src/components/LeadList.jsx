@@ -68,11 +68,9 @@ export default function LeadList() {
 
   useEffect(() => {
     loadLeads();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, sortBy, sortOrder]);
 
   useEffect(() => {
-    // Update URL when filters change
     const params = new URLSearchParams();
     if (filters.salesAgent) params.set('salesAgent', filters.salesAgent);
     if (filters.status) params.set('status', filters.status);
@@ -84,8 +82,8 @@ export default function LeadList() {
     try {
       const response = await agentsAPI.getAll();
       setAgents(response.data);
-    } catch (err) {
-      console.error('Error loading agents:', err);
+    } catch (error) {
+      console.error('Error loading agents:', error);
       addToast({ type: 'error', message: 'Unable to load agents.' });
     }
   };

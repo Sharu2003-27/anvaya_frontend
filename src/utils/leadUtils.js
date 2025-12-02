@@ -1,5 +1,4 @@
 export const calculateTimeToClose = (lead) => {
-  // If status is closed, return 0
   if (lead.status?.toLowerCase() === 'closed') {
     return 0;
   }
@@ -35,18 +34,14 @@ export const formatTimeToClose = (days) => {
   return `${days} days`;
 };
 
-// Returns the numeric remaining days to close for a lead,
-// always treating closed leads as 0.
 export const getTimeToCloseValue = (lead) => {
   if (!lead) return 0;
-  // Closed leads are always considered 0 days remaining, regardless of stored value
   if (lead.status?.toLowerCase() === 'closed') {
     return 0;
   }
   return calculateTimeToClose(lead);
 };
 
-// Returns a human readable label (e.g. "Closed", "1 day", "5 days").
 export const getTimeToCloseLabel = (lead) => {
   const days = getTimeToCloseValue(lead);
   return formatTimeToClose(days);
